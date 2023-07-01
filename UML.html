@@ -1,0 +1,116 @@
+<!-- (Start HTML Volta\UmlDoc\MermaidDiagram) -->
+<html lang="en">
+  <head>
+    <title>ClassDiagram Volta\Component\Configuration\</title>
+    <meta charset="utf-8" />
+    <style>
+        body{
+            margin:20px; color:#cccccc;
+            background: rgb(52,20,20);
+            background: linear-gradient(90deg, rgba(52,20,20,1) 12%, rgba(13,6,6,1) 52%, rgba(52,19,19,1) 90%);
+        }
+    </style>
+  </head>
+  <body>
+    <h1>Volta\Component\Configuration\</h1>
+    <p>Generated @ 20230619 13:50:50</p>
+
+<div class="mermaid">
+%%{init: {'theme':'dark'}}%%
+classDiagram
+    class Volta_Component_Configuration_Config {
+        #array _allowedOptions=[0..*]
+        #string _alreadySetMessage="Option "%s" already set in "%s::_options"!"
+        #?string _file=NULL
+        #string _notAllowedMessage="Option "%s" not allowed in "%s::_options"!"
+        #?Closure _onOptionChange=NULL
+        #string _optionNotFoundMessage="Option "%s" not found in "%s::_options" and no default value provided."
+        #array _options=[0..*]
+        #string _requiredMissingMessage="Required option "%s" is missing in "%s::_options"!"
+        #array _requiredOptions=[0..*]
+        +array context$=[0..*]
+        #_getCallee():string
+        #_getJsonErrorToText(int jsonErrorCode):string
+        #_getOptionsFromJson(string json):array
+        +generate(array library):array
+        +generateJson(array library):string
+        +getConfigDefaults(string class, bool full):int
+        +__construct(array|string options=[], ?Closure onOptionChangeCallback=NULL)
+        +getAllowedOptions():array
+        +getFile():?string
+        +getOption(string key, mixed default=NULL):mixed
+        +getOptions():array
+        +getRequiredOptions():array
+        +hasOption(string key):bool
+        +jsonSerialize():mixed
+        +offsetExists(mixed offset):bool
+        +offsetGet(mixed offset):mixed
+        +offsetSet(mixed offset, mixed value):void
+        +offsetUnset(mixed offset):void
+        +optionEquals(string key, mixed value):bool
+        +setAllowedOptions(array allowedOptions):static
+        +setOption(string key, mixed value, bool overWrite=false):static
+        +setOptions(array _options):object
+        +setRequiredOptions(array requiredOptions):static
+        +unsetOption(string key):void
+    }
+    class ArrayAccess {
+         	&lt;&lt;interface&gt;&gt;
+    }
+    ArrayAccess..|>Volta_Component_Configuration_Config
+    class JsonSerializable {
+         	&lt;&lt;interface&gt;&gt;
+    }
+    JsonSerializable..|>Volta_Component_Configuration_Config
+    Volta_Component_Configuration_Config..>Volta_Component_Configuration_OptionsTrait
+    class Volta_Component_Configuration_Exception
+    Exception<|--Volta_Component_Configuration_Exception
+    class Exception
+    class Stringable {
+         	&lt;&lt;interface&gt;&gt;
+    }
+    class Throwable {
+         	&lt;&lt;interface&gt;&gt;
+    }
+    Stringable..|>Throwable
+    Throwable..|>Exception
+    class Volta_Component_Configuration_Key {
+         	&lt;&lt;Attribute&gt;&gt;
+        +__construct(string key, mixed default=NULL, string description=")
+        +__invoke():void
+        +__toString():string
+        +getDefault():mixed
+        +getDefaultAsArray():array
+        +getDescription():string
+        +getDescriptionAsArray():array
+        +getKey():string
+        +toArray():array
+    }
+    Stringable..|>Volta_Component_Configuration_Key
+    class Volta_Component_Configuration_OptionsTrait {
+         	&lt;&lt;trait&gt;&gt;
+        #array _allowedOptions=[0..*]
+        #string _alreadySetMessage="Option "%s" already set in "%s::_options"!"
+        #string _notAllowedMessage="Option "%s" not allowed in "%s::_options"!"
+        #?Closure _onOptionChange=NULL
+        #string _optionNotFoundMessage="Option "%s" not found in "%s::_options" and no default value provided."
+        #array _options=[0..*]
+        #string _requiredMissingMessage="Required option "%s" is missing in "%s::_options"!"
+        #array _requiredOptions=[0..*]
+        #_getCallee():string
+        +getOption(string key, mixed default=NULL):mixed
+        +getOptions():array
+        +hasOption(string key):bool
+        +optionEquals(string key, mixed value):bool
+        +setOption(string key, mixed value, bool overWrite=false):static
+        +setOptions(array _options):object
+        +unsetOption(string key):void
+    }
+</div>
+    <script type="module">
+         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+         mermaid.initialize({ startOnLoad: true });
+    </script>
+  </body>
+</html>
+<!-- (End HTML Volta\UmlDoc\MermaidDiagram) -->
