@@ -14,11 +14,14 @@
     ],
 
     "require": {
-        "php": ">=8.1"
+        "php": ">=8.1",
+        "volta-framework/component-cli": "*"
     },
 
+    "minimum-stability": "dev",
+
     "autoload": {
-        "psr-4": { "Volta\\Component\\Configuration\\": "src/Volta/Component/Configuration/" }
+        "psr-4": { "Volta\\Component\\Configuration\\": "libraries/Volta/Component/Configuration/"}
     }
 
 

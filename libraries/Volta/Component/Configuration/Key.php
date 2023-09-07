@@ -18,19 +18,22 @@ class Key
 {
 
     /**
+     * The full name of the Configuration key including the key part separators
      * @var string
      */
-    private string $_key;
+    public readonly string $key;
 
     /**
+     * The default value for the configuration key
      * @var mixed|null
      */
-    private mixed $_default;
+    public readonly mixed $default;
 
     /**
+     * Description for the configuration key
      * @var string
      */
-    private string $_description;
+    public readonly string $description;
 
     /**
      * @param string $key
@@ -39,43 +42,55 @@ class Key
      */
     public function __construct(string $key,  mixed $default=null, string $description='')
     {
-       $this->_key = $key;
-       $this->_default= $default;
-       $this->_description= $description;
+       $this->key = $key;
+       $this->default= $default;
+       $this->description= $description;
     }
 
     /**
+     * @deprecated  Use Instance->key
      * @return string
      */
     public function getKey(): string
     {
-        return $this->_key;
+        return $this->key;
     }
 
     /**
+     * @deprecated Use Instance->default
      * @return mixed
      */
     public function getDefault(): mixed
     {
-        return $this->_default;
+        return $this->default;
     }
 
     /**
      * @return string
+     * @deprecated @deprecated Use Instance->description
      */
     public function getDescription(): string
     {
-        return $this->_description;
+        return $this->description;
     }
 
-
     /**
+     * Convert the key to an array
+     *
+     * <code>
+     * [
+     *     "part1" => [
+     *         "part2" => "value"
+     *     ]
+     * ]
+     * </code>
+     *
      * @return array<string, mixed>
      */
     public function toArray(): array
     {
         $options = [];
-        $keys = explode('.', $this->getKey());
+        $keys = explode('.', $this->key);
         $current = &$options;
         foreach($keys as $subKey){
             $current[$subKey] = [];
@@ -91,13 +106,13 @@ class Key
     public function getDefaultAsArray(): array
     {
         $options = [];
-        $keys = explode('.', $this->getKey());
+        $keys = explode('.', $this->key);
         $current = &$options;
         foreach($keys as $subKey){
             $current[$subKey] = [];
             $current = &$current[$subKey];
         }
-        $current = $this->getDefault();
+        $current = $this->default;
         return (array)$options;
     }
 
@@ -107,16 +122,15 @@ class Key
     public function getDescriptionAsArray(): array
     {
         $options = [];
-        $keys = explode('.', $this->getKey());
+        $keys = explode('.', $this->key);
         $current = &$options;
         foreach($keys as $subKey){
             $current[$subKey] = [];
             $current = &$current[$subKey];
         }
-        $current = $this->getDescription();
+        $current = $this->description;
         return (array) $options;
     }
-
 
     /**
      * @return void
@@ -132,15 +146,15 @@ class Key
     public function __toString(): string
     {
         $template = '"%s" => "%s"';
-        if (is_numeric($this->getDefault())){
+        if (is_numeric($this->default)){
             $template = '"%s" => %s,';
         }
-        if($this->getDescription() != '' ) {
+        if($this->description != '' ) {
             $template .= ' // %s';
         } else {
             $template .= '%s';
         }
-        return sprintf($template , $this->getKey(), (string) $this->getDefault(), $this->getDescription());
+        return sprintf($template , $this->key, (string) $this->default, $this->description);
     }
 
 }
