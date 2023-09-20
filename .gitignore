@@ -3,3 +3,4 @@ __*
 vendor/
 composer.lock
 phpunit.xml.dist
+tests/config/phpunit.result.cache

@@ -13,3 +13,6 @@ declare(strict_types=1);
 /*
  * Expects a namespace to
  */
+
+$x = "hallo";
+echo $x[2];

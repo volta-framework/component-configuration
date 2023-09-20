@@ -18,6 +18,8 @@ use JsonSerializable;
 use ReflectionClass;
 
 use Volta\Component\Configuration\Exception as ConfigException;
+
+
 /**
  * Class Config
  * Class for storing name value pairs
@@ -48,7 +50,7 @@ class Config implements ArrayAccess, JsonSerializable
     /**
      * Config constructor.
      * Passed options can be
-     * 1. A PHP file returning an array
+     * 1. A PHP file returning array
      * 2. A Json file returning valid json
      * 3. A valid Json string
      * 4. An array itself
@@ -59,29 +61,13 @@ class Config implements ArrayAccess, JsonSerializable
      */
     public function __construct(array|string $options=[], null|Closure $onOptionChangeCallback = null)
     {
-        if (is_string($options)) { // can be a file or json string
-            if (file_exists($options)) { // if not assume a json string
-                $this->_file = $options;
-                if( !is_readable($options) || is_dir($options) ) {
-                    throw new ConfigException(sprintf('Could not open "%s" as file.', $options));
-                }
-                $ext = pathinfo($options, PATHINFO_EXTENSION);
-                $options = match ($ext) {
-                    'php' => (array)include $options,
-                    'json' => $this->_getOptionsFromJson((string) file_get_contents($options)),
-                    default => throw new ConfigException(sprintf('Filetype "*.%s" not supported', $ext)),
-                };
-            } else {
-                $options = $this->_getOptionsFromJson($options);
-            }
-        }
-        $this->setOptions($options); // on this point the $options variable will be an array
+        $this->setOptions($options);
         $this->_onOptionChange = $onOptionChangeCallback;
     }
 
-    #endregion
-    // -------------------------------------------------------------------------------------------------
+    #endregion -------------------------------------------------------------------------------------------------
     #region - ArrayAccess interface stubs:
+
     /**
      * @inheritdoc
      * @see https://www.php.net/manual/en/arrayaccess.offsetexists.php
@@ -121,8 +107,7 @@ class Config implements ArrayAccess, JsonSerializable
         $this->unsetOption($offset);
     }
 
-    #endregion
-    // -------------------------------------------------------------------------------------------------
+    #endregion -------------------------------------------------------------------------------------------------
     #region - Generation
 
     /**
@@ -167,8 +152,7 @@ class Config implements ArrayAccess, JsonSerializable
 
         try {
             $reflection = new ReflectionClass($class);
-        } catch(Throwable $e)
-        {
+        } catch(Throwable $e) {
             return $numberOfKeysFound;
         }
 
@@ -207,10 +191,8 @@ class Config implements ArrayAccess, JsonSerializable
         return $numberOfKeysFound;
     }
 
-    #endregion
-    // -------------------------------------------------------------------------------------------------
+    #endregion  -------------------------------------------------------------------------------------------------
     #region - JSON related methods
-
 
     /**
      * @ignore Do not show up in generated documentation
@@ -269,19 +251,19 @@ class Config implements ArrayAccess, JsonSerializable
         return $this->getOptions();
     }
 
-    #endregion
-    // -------------------------------------------------------------------------------------------------
+    #endregion  -------------------------------------------------------------------------------------------------
     #region - Messages placeholders
 
     // The first placeholder(%s) is the name of the option key,
-    // the second the name of the class the Trait is being used in.
-    protected string $_requiredMissingMessage = 'Required option "%s" is missing in "%s::options"!';
-    protected string $_notAllowedMessage      = 'Option "%s" not allowed in "%s::options"!';
-    protected string $_optionNotFoundMessage  = 'Option "%s" not found in "%s::options" and no default value provided.';
-    protected string $_alreadySetMessage      = 'Option "%s" already set in "%s::options"!';
+    // the second the name of the class it is being used in.
+    protected string $_requiredMissingMessage = 'Required option "%s" is missing, called in "%s"!';
+    protected string $_notAllowedMessage      = 'Option "%s" not allowed, called in "%s"!';
+    protected string $_optionNotFoundMessage  = 'Option "%s" not found, called in"%s" and no default value provided!';
+    protected string $_alreadySetMessage      = 'Option "%s" already set, called in "%s"!';
+    protected string $_unsetRequiredMessage   = 'Cannot unset a required option "%s", called in "%s"!';
 
-    #endregion
-    // -------------------------------------------------------------------------------------------------
+
+    #endregion  -------------------------------------------------------------------------------------------------
     #region - Required Options
     /**
      * @ignore (do not show up in generated documentation)
@@ -311,8 +293,7 @@ class Config implements ArrayAccess, JsonSerializable
         return $this;
     }
 
-    #endregion
-    // -------------------------------------------------------------------------------------------------
+    #endregion  -------------------------------------------------------------------------------------------------
     #region - Allowed options
 
     /**
@@ -344,8 +325,7 @@ class Config implements ArrayAccess, JsonSerializable
         return $this->_allowedOptions;
     }
 
-    #endregion
-    // -------------------------------------------------------------------------------------------------
+    #endregion  -------------------------------------------------------------------------------------------------
     #region - Options
 
     /**
@@ -369,25 +349,42 @@ class Config implements ArrayAccess, JsonSerializable
      * @see Config::$_allowedOptions
      * @see Config::$_requiredOptions
      *
-     * @param array<string, mixed> $_options
+     * @param string|array<string, mixed> $options
      * @return object The current instance of the class implementing this trait
      * @throws ConfigException
      */
-    public function setOptions(array $_options): object
+    public function setOptions(array|string $options): object
     {
+        if (is_string($options)) { // can be a file or json string
+            if (file_exists($options)) { // if not, assume a json string
+                $this->_file = $options;
+                if( !is_readable($options) || is_dir($options) ) {
+                    throw new ConfigException(sprintf('Could not open "%s" as file.', $options));
+                }
+                $ext = pathinfo($options, PATHINFO_EXTENSION);
+                $options = match ($ext) {
+                    'php' => (array)include $options,
+                    'json' => $this->_getOptionsFromJson((string) file_get_contents($options)),
+                    default => throw new ConfigException(sprintf('Filetype "*.%s" not supported', $ext)),
+                };
+            } else {
+                $options = $this->_getOptionsFromJson($options);
+            }
+        }
+
         foreach($this->_requiredOptions as $key) {
-            if(!array_key_exists($key, $_options)){
+            if(!array_key_exists($key, $options)){
                 throw new ConfigException(sprintf($this->_requiredMissingMessage, $key, $this->_getCallee()));
             }
         }
         if (count($this->_allowedOptions)) {
-            foreach(array_keys($_options) as $key) {
+            foreach(array_keys($options) as $key) {
                 if(!in_array($key, $this->_allowedOptions)){
                     throw new ConfigException(sprintf($this->_notAllowedMessage, $key, $this->_getCallee()));
                 }
             }
         }
-        $this->_options = $_options;
+        $this->_options = array_merge($this->_options, $options);
         return $this;
     }
 
@@ -502,9 +499,9 @@ class Config implements ArrayAccess, JsonSerializable
      */
     public function unsetOption(string $key): void
     {
-        if ($this->hasOption($key)) return;
+        if (!$this->hasOption($key)) return;
         if(in_array($key, $this->getRequiredOptions())) {
-            throw new ConfigException(sprintf('Cannot unset a required option "%s"', $key));
+            throw new ConfigException(sprintf($this->_unsetRequiredMessage, $key, $this->_getCallee()));
         }
         unset($this->_options[$key]);
     }
