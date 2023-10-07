@@ -8,6 +8,11 @@ use PHPUnit\Framework\TestCase;
 
 use Volta\Component\Configuration\Config;
 
+/**
+ * @covers \Volta\Component\Configuration\Config
+ * @covers \Volta\Component\Configuration\Exception
+ * @covers \Volta\Component\Configuration\Key
+ */
 class ConfigTest  extends TestCase
 {
     private array $data = [
@@ -126,6 +131,31 @@ class ConfigTest  extends TestCase
 
         // removing is not allowed here
         $conf->unsetOption('key-1');
+    }
+
+    #[TestDox('Test(s) for cascading configurations')]
+    public function testCascadingConfigurations():void
+    {
+        $confA = new Config(DATA_DIR . 'ConfigData.json');
+        $confB = new Config(DATA_DIR . 'ConfigDataCascading.json');
+        $this->assertEquals( "value-2-2-1", $confA['key-2.key-2-2.key-2-2-1']);
+        $confA->setOptions($confB->getOptions());
+        $this->assertEquals( "new value", $confA['key-4']);
+        $this->assertEquals( [], $confA['key-3']); // must stil be there
+        $this->assertEquals( "value-2-2-1-cascading", $confA['key-2.key-2-2.key-2-2-1']); // has a new value
+        $confA = new Config();
+        $confA->setAllowedOptions([
+            'key-1',
+            'key-2',
+            'key-2.key-2-1',
+            'key-2.key-2-2',
+            'key-2.key-2-2.key-2-2-1',
+            'key-3',
+        ]);
+        $confA->setOptions(DATA_DIR . 'ConfigData.json');
+        $this->expectException(\Volta\Component\Configuration\Exception::class);
+        $this->expectExceptionMessage('Option "key-4" not allowed, called in "src\ConfigTest::testCascadingConfigurations()"!');
+        $confA->setOptions($confB->getOptions());
     }
 
 }

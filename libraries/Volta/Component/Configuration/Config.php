@@ -265,6 +265,7 @@ class Config implements ArrayAccess, JsonSerializable
 
     #endregion  -------------------------------------------------------------------------------------------------
     #region - Required Options
+
     /**
      * @ignore (do not show up in generated documentation)
      * @var string[] If not empty, the option keys in this list are required
