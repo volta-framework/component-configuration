@@ -66,7 +66,9 @@ class ConfigTest  extends TestCase
             $this->assertEquals($conf->getOption('key-1'), 'value-1');
             $this->assertEquals($conf['key-1'], 'value-1');
             $this->assertEquals($conf->getOption('key-2.key-2-1'), 'value-2-1');
+            $this->assertEquals($conf->get('key-2.key-2-1'), 'value-2-1');
             $this->assertEquals($conf['key-2.key-2-1'], 'value-2-1');
+
             $this->assertEquals($conf->getOption('none.existing.key.with.default.value', 'default.value'), 'default.value');
             $this->assertEquals($conf['key-3'], []);
             $this->assertTrue($conf->hasOption('key-3'));
@@ -89,6 +91,7 @@ class ConfigTest  extends TestCase
             $this->expectException(\Volta\Component\Configuration\Exception::class);
             $this->expectExceptionMessage('Option "key-1" already set, called in "Volta\Component\Configuration\Config::offsetSet()"!');
             $conf->setOption('key-1', 'bogus again');
+            $conf->set('key-1', 'bogus again');
             $conf['key-1'] = 'bogus again';
         }
     }

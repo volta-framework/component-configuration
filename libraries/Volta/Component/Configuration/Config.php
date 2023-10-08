@@ -430,6 +430,19 @@ class Config implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Shorthand for getOption()
+     *
+     * @param string $key
+     * @param mixed|null $default
+     * @return mixed
+     * @throws Exception
+     */
+    public function get(string $key, mixed $default=null): mixed
+    {
+        return $this->getOption($key, $default);
+    }
+
+    /**
      * @ignore (do not show up in generated documentation)
      * @return string
      */
@@ -490,6 +503,21 @@ class Config implements ArrayAccess, JsonSerializable
             $this->_onOptionChange->bindTo($this);
             call_user_func($this->_onOptionChange,$key , $old, $value);
         }
+        return $this;
+    }
+
+    /**
+     * Shorthand for setOption()
+     *
+     * @param string $key
+     * @param mixed $value
+     * @param bool $overWrite
+     * @return $this
+     * @throws Exception
+     */
+    public function set(string $key, mixed $value, bool $overWrite=false ):static
+    {
+        $this->setOption($key, $value, $overWrite);
         return $this;
     }
 
