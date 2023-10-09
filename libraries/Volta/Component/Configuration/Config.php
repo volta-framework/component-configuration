@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Volta\Component\Configuration;
 
+use Generator;
 use Throwable;
 use ArrayAccess;
 use Closure;
@@ -373,19 +374,41 @@ class Config implements ArrayAccess, JsonSerializable
             }
         }
 
-        foreach($this->_requiredOptions as $key) {
-            if(!array_key_exists($key, $options)){
-                throw new ConfigException(sprintf($this->_requiredMissingMessage, $key, $this->_getCallee()));
-            }
+        $newListOfOptions = $this->listOptions($options);
+
+        // check missing required option
+        $missingRequired = array_diff($this->_requiredOptions, $newListOfOptions);
+        if (count($missingRequired)) {
+            throw new ConfigException(sprintf($this->_requiredMissingMessage, implode(', ', $missingRequired), $this->_getCallee()));
         }
+
+        // check not allowed options
         if (count($this->_allowedOptions)) {
-            foreach(array_keys($options) as $key) {
-                if(!in_array($key, $this->_allowedOptions)){
-                    throw new ConfigException(sprintf($this->_notAllowedMessage, $key, $this->_getCallee()));
-                }
+            $notAllowed = array_diff($newListOfOptions, $this->_allowedOptions);
+            if (count($notAllowed)) {
+                throw new ConfigException(sprintf($this->_notAllowedMessage, implode(', ', $notAllowed), $this->_getCallee()));
             }
         }
+
+        // all is ok
         $this->_options = array_merge($this->_options, $options);
+
+//        foreach($this->_requiredOptions as $key) {
+//            if(!$this->hasOption($key)){
+//                throw new ConfigException(sprintf($this->_requiredMissingMessage, $key, $this->_getCallee()));
+//            }
+//        }
+
+//        if (count($this->_allowedOptions)) {
+//            foreach(array_keys($options) as $key) {
+//                if(!$this->hasOption($key)){
+//                if(!in_array($key, $this->_allowedOptions)){
+//                    throw new ConfigException(sprintf($this->_notAllowedMessage, $key, $this->_getCallee()));
+//                }
+//            }
+//        }
+
+
         return $this;
     }
 
@@ -395,6 +418,29 @@ class Config implements ArrayAccess, JsonSerializable
     public function getOptions(): array
     {
         return $this->_options;
+    }
+
+    public function listOptions(null|array $options=null): array
+    {
+        $listOptions = [];
+        if (null === $options) {
+            $options = $this->_options;
+        }
+        foreach ($this->_listOptions($options) as $fullKey) {
+            $listOptions[] = $fullKey;
+        }
+        return $listOptions;
+    }
+
+    private function _listOptions(array $options, string $currentKeyPart=''): Generator
+    {
+        foreach ($options as $keyPart => $nextOptions) {
+            $newKeyPart = empty($currentKeyPart) ? $keyPart : $currentKeyPart . '.' . $keyPart;
+            yield $newKeyPart;
+            if (is_array($nextOptions)) {
+                foreach ($this->_listOptions($nextOptions, $newKeyPart) as $nextKey) yield $nextKey;
+            };
+        }
     }
 
     /**
