@@ -392,23 +392,6 @@ class Config implements ArrayAccess, JsonSerializable
 
         // all is ok
         $this->_options = array_merge($this->_options, $options);
-
-//        foreach($this->_requiredOptions as $key) {
-//            if(!$this->hasOption($key)){
-//                throw new ConfigException(sprintf($this->_requiredMissingMessage, $key, $this->_getCallee()));
-//            }
-//        }
-
-//        if (count($this->_allowedOptions)) {
-//            foreach(array_keys($options) as $key) {
-//                if(!$this->hasOption($key)){
-//                if(!in_array($key, $this->_allowedOptions)){
-//                    throw new ConfigException(sprintf($this->_notAllowedMessage, $key, $this->_getCallee()));
-//                }
-//            }
-//        }
-
-
         return $this;
     }
 
