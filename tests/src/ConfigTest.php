@@ -114,10 +114,20 @@ class ConfigTest  extends TestCase
     public function testMissingRequiredOption(): void
     {
         $conf = new Config();
-        $conf->setRequiredOptions(['key-1']);
+        $conf->setRequiredOptions(['key-2.key-2-2.bogus']);
         $this->expectException(\Volta\Component\Configuration\Exception::class);
-        $this->expectExceptionMessage('Required option "key-1" is missing, called in "src\ConfigTest::testMissingRequiredOption()"!');
+        $this->expectExceptionMessage('Required option "key-2.key-2-2.bogus" is missing, called in "src\ConfigTest::testMissingRequiredOption()"!');
         $conf->setOptions([]);
+    }
+
+    #[TestDox('Test(s) for NOT missing options the "required" list')]
+    public function testRequiredOption(): void
+    {
+        $conf = new Config();
+        $conf->setRequiredOptions(['key-2.key-2-2']);
+        $conf->setOptions( $this->data['php-array']);
+        $this->assertEquals($conf['key-1'], 'value-1');
+
     }
 
     #[TestDox('Test(s) for unsetting options in the "required" list')]
