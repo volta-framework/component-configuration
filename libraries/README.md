@@ -6,49 +6,56 @@ The Configuration component counts 3 classes all in the namespace *Volta\Compone
 2. Volta\Component\Configuration\Key
 3. Volta\Component\Configuration\Exception
 
-## ~\Config
-
+## UML Class Diagram
 ```mermaid
 classDiagram
-    direction LR
-    class Config
-    class ArrayAccess
-    class JsonSerializable
-    
-    Config <|.. ArrayAccess: implements
-    Config <|.. JsonSerializable: implements
-    
-```
 
-## ~\Key
-
-```mermaid
-classDiagram
-    class Key{ 
-        <<attribute>> 
-        +  &laquo;readonly&raquo; key:string 
-        +  &laquo;readonly&raquo; default:mixed = NULL
-        +  &laquo;readonly&raquo; description:string = &ldquo;&rdquo;
-    }        
-```
-
-## ~\Exception
-
-Basic Exception for all exceptions thrown in this Component.
-
-```mermaid
-classDiagram
-    direction TB
-    class Exception
-    class Std_Exception
-    class Stringable {
-        &lt;&lt;interface&gt;&gt;
+    note "SPL = Standard PHP Library"
+    namespace Spl {
+        class _Throwable {
+            &lt;&lt;interface&gt;&gt;
+        }
+        class _Stringable {
+            &lt;&lt;interface&gt;&gt;
+        }
+        class _Exception
+        class _Attribute
+        class _ArrayAccess
+        class _JsonSerializable
     }
-    class Throwable {
-        &lt;&lt;interface&gt;&gt;
-    }
+
+    link Config "https://github.com/volta-framework/component-configuration/blob/main/libraries/Volta/Component/Configuration/Config.php"
+
+    link Key "https://github.com/volta-framework/component-configuration/blob/main/libraries/Volta/Component/Configuration/Key.php"
+
+    link Exception "https://github.com/volta-framework/component-configuration/blob/main/libraries/Volta/Component/Configuration/Exception.php"
+
+    note for Config "Only the most used class members are displayed"
     
-    Std_Exception  <|-- Exception : extends
-    Stringable ..|> Throwable : implements
-    Throwable  ..|> Std_Exception : implements
+    namespace Volta-Component-Configuration {
+        class Exception        
+        class Key{            
+            &lt;&lt;Attribute&gt;
+        }
+        
+        class Config{
+            +getOption($key:string, $default:mixed):mixed
+            +setOption($key:string, $value:mixed, $overWrite: bool = false):mixed
+            +hasOption($key: string): bool
+            +setRequiredOptions($requiredOptions: string[]): self
+            +setAllowedOptions($allowedOptions: string[]): self
+            +setOptions($options: array&lt;string, mixed&gt;|string): self
+        }
+    }
+
+    _Throwable <|.. _Stringable  : implements
+    Exception  --|> _Exception  : extends
+    _Throwable  ..|> _Exception : implements
+    Key --|>  _Attribute  : extends
+    Config ..> Exception : throws
+    Config ..> _ArrayAccess : implements
+    Config ..> _JsonSerializable : implements
+    
 ```
+<small>* *Only the most used class members are displayed in the UML ClassDiagram* </small>\
+<small>* *SPL = Standard PHP Library* </small>

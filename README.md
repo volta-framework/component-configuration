@@ -1,20 +1,123 @@
-# Volta Configuration
+# Volta Configuration Component 
 
-Component to manage configurations
+<!-- TOC -->
+* [Volta Configuration Component](#volta-configuration-component-)
+  * [Features](#features)
+  * [UML Class Diagram](#uml-class-diagram)
+  * [Construction](#construction)
+  * [Usage](#usage)
+<!-- TOC -->
 
-## Usage
-Options passing in the constructor can be one of the following:
+Component to manage configurations.
+## Features
 
-  1. A PHP file returning an array
-  2. A Json file returning valid json
-  3. A valid Json string
-  4. An array itself
+* Different formats: JSON and PHP Array's
+* File or memory storage
+* Cascading Configurations
+* Specify required options
+* Specify a set of allowed options (whitelisting)
+* Generation of configuration file(*.json or *.php) based on Configuration Keys Attribute in code
 
-### 1. A PHP file returning an array
+## UML Class Diagram
+```mermaid
+classDiagram
 
-`config.php`
+    note "SPL = Standard PHP Library"
+    namespace Spl {
+        class _Throwable {
+            &lt;&lt;interface&gt;&gt;
+        }
+        class _Stringable {
+            &lt;&lt;interface&gt;&gt;
+        }
+        class _Exception
+        class _Attribute
+        class _ArrayAccess
+        class _JsonSerializable
+    }
+
+    link Config "https://github.com/volta-framework/component-configuration/blob/main/libraries/Volta/Component/Configuration/Config.php"
+
+    link Key "https://github.com/volta-framework/component-configuration/blob/main/libraries/Volta/Component/Configuration/Key.php"
+
+    link Exception "https://github.com/volta-framework/component-configuration/blob/main/libraries/Volta/Component/Configuration/Exception.php"
+
+    note for Config "Only the most used class members are displayed"
+    
+    namespace Volta-Component-Configuration {
+        class Exception        
+        class Key{            
+            &lt;&lt;Attribute&gt;
+        }
+        
+        class Config{
+            +getOption($key:string, $default:mixed):mixed
+            +setOption($key:string, $value:mixed, $overWrite: bool = false):mixed
+            +hasOption($key: string): bool
+            +setRequiredOptions($requiredOptions: string[]): self
+            +setAllowedOptions($allowedOptions: string[]): self
+            +setOptions($options: array&lt;string, mixed&gt;|string): self
+        }
+    }
+
+    _Throwable <|.. _Stringable  : implements
+    Exception  --|> _Exception  : extends
+    _Throwable  ..|> _Exception : implements
+    Key --|>  _Attribute  : extends
+    Config ..> Exception : throws
+    Config ..> _ArrayAccess : implements
+    Config ..> _JsonSerializable : implements
+    
+```
+
+<small>* *Only the most used class members are displayed in the UML ClassDiagram* </small>\
+<small>* *SPL = Standard PHP Library* </small>
+
+## Construction
+
+```php
+    declare(strict_types=1);
+    
+    use Volta\Component\Configuration\Config
+    
+    // i. Initialize a Config object with options stored in a *.php file 
+    $conf = new Config(__DIR__ . '/config/example-config.php');
+    
+    // ii. Initialize a Config object with options stored in a *.json file 
+    $conf = new Config(__DIR__ . '/config/example-config.json');
+    
+    // iii. Initialize a Config object with options stored in a json string 
+    $conf = new Config(
+       '{
+           "databases": {
+             "default": {
+               "dsn": "sqlite:/path/to/sqlite/db/file.sqlite"
+             }
+           }
+       }'
+    );
+    
+    // iv. Initialize a Config object with options stored in a php array 
+    $conf = new Config(
+       [
+          'databases' => [
+              'default' => [
+                  'dsn' => 'sqlite:/path/to/sqlite/db/file.sqlite'
+              ]
+          ]
+      ]
+    );
+    
+    // v. Adding or overwriting data after initialization can be done with the setOption() method
+    //    and accepts all the formats described above. Previous data will be
+    //    overwritten. (cascading) configuration 
+    $conf->setOptions(__DIR__ . '/config/example-config.php')
+    
+```
+File : `~/config/example-config.php`:
 ```php
 declare(strict_types=1);
+
 return [
     'databases' => [
         'default' => [
@@ -23,22 +126,8 @@ return [
     ]
 ];
 ```
-`other.php`
 
-```php
-declare(strict_types=1);
-
-use Volta\Component\Configuration\Config
-use \PDO
-
-$conf = new Config('./config.php');
-$pdo = new PDO($conf['databases.default.dsn']);
-
-```
-
-### 2. A Json file returning valid json
-
-`config.json`
+File: `~/config/example-config.json`:
 ```json
 {
   "databases": {
@@ -48,214 +137,61 @@ $pdo = new PDO($conf['databases.default.dsn']);
   }
 }
 ```
-`other.php`
+
+
+## Usage
+
+When the Configuration object is initialized values can be retrieved. Best to show with some example code:
 
 ```php
 declare(strict_types=1);
 
 use Volta\Component\Configuration\Config
+use Volta\Component\Configuration\Exception as ConfigException
 use \PDO
 
-$conf = new Config('./config.json');
-$pdo = new PDO($conf['databases.default.dsn']);
+$conf = new Config(__DIR__ . '/config/example-config.php');
 
+// check if we have a database configuration, exit if not 
+if ($conf->hasOption('databases.default')) {
+   exit('No default database settings configured')
+}
+
+// The above functionality can also be accomplished by adding (a) required option(s) which 
+// will generate an exception on failure with the message:
+//
+//     Required option "databases.default" is missing
+//
+try{
+    $conf = new Config(
+        options: __DIR__ . '/config/example-config.php', 
+        requiredOptions: ['databases.default']
+    );
+} catch (ConfigException $e) {
+    exit($e->getMessage())
+}    
+
+
+// We also can set/overwrite a value
+$conf->setOption(
+    key: 'database.default.password', 
+    value: null,
+    overWrite: true 
+);
+
+// create PDO object and provide some defaults in case some options are not set
+$pdo = new PDO(
+    dns: $conf['databases.default.dsn'],
+    username: $conf->getOption('databases.default.username', null),
+    password: $conf->getOption('databases.default.password'),
+    options: $conf->getOption(
+        'databases.default.options', 
+        [
+            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_CASE => PDO::CASE_NATURAL
+        ]        
+    )
+);
 ```
-
-[//]: # (Start Volta\UmlDoc\MermaidDiagram)
-```mermaid
-classDiagram
-    class Volta_Component_Configuration_Config {
-        #array _allowedOptions=[0..*]
-        #string _alreadySetMessage="Option "%s" already set in "%s::_options"!"
-        #?string _file=NULL
-        #string _notAllowedMessage="Option "%s" not allowed in "%s::_options"!"
-        #?Closure _onOptionChange=NULL
-        #string _optionNotFoundMessage="Option "%s" not found in "%s::_options" and no default value provided."
-        #array _options=[0..*]
-        #string _requiredMissingMessage="Required option "%s" is missing in "%s::_options"!"
-        #array _requiredOptions=[0..*]
-        +array context$=[0..*]
-        #_getCallee():string
-        #_getJsonErrorToText(int jsonErrorCode):string
-        #_getOptionsFromJson(string json):array
-        +generate(array library):array
-        +generateJson(array library):string
-        +getConfigDefaults(string class, bool full):int
-        +__construct(array|string options=[], ?Closure onOptionChangeCallback=NULL)
-        +getAllowedOptions():array
-        +getFile():?string
-        +getOption(string key, mixed default=NULL):mixed
-        +getOptions():array
-        +getRequiredOptions():array
-        +hasOption(string key):bool
-        +jsonSerialize():mixed
-        +offsetExists(mixed offset):bool
-        +offsetGet(mixed offset):mixed
-        +offsetSet(mixed offset, mixed value):void
-        +offsetUnset(mixed offset):void
-        +optionEquals(string key, mixed value):bool
-        +setAllowedOptions(array allowedOptions):static
-        +setOption(string key, mixed value, bool overWrite=false):static
-        +setOptions(array _options):object
-        +setRequiredOptions(array requiredOptions):static
-        +unsetOption(string key):void
-    }
-    class ArrayAccess {
-         	&lt;&lt;interface&gt;&gt;
-    }
-    ArrayAccess..|>Volta_Component_Configuration_Config
-    class JsonSerializable {
-         	&lt;&lt;interface&gt;&gt;
-    }
-    JsonSerializable..|>Volta_Component_Configuration_Config
-    Volta_Component_Configuration_Config..>Volta_Component_Configuration_OptionsTrait
-    class Volta_Component_Configuration_Exception
-    Exception<|--Volta_Component_Configuration_Exception
-    class Exception
-    class Stringable {
-         	&lt;&lt;interface&gt;&gt;
-    }
-    class Throwable {
-         	&lt;&lt;interface&gt;&gt;
-    }
-    Stringable..|>Throwable
-    Throwable..|>Exception
-    class Volta_Component_Configuration_Key {
-         	&lt;&lt;Attribute&gt;&gt;
-        +__construct(string key, mixed default=NULL, string description=")
-        +__invoke():void
-        +__toString():string
-        +getDefault():mixed
-        +getDefaultAsArray():array
-        +getDescription():string
-        +getDescriptionAsArray():array
-        +getKey():string
-        +toArray():array
-    }
-    Stringable..|>Volta_Component_Configuration_Key
-    class Volta_Component_Configuration_OptionsTrait {
-         	&lt;&lt;trait&gt;&gt;
-        #array _allowedOptions=[0..*]
-        #string _alreadySetMessage="Option "%s" already set in "%s::_options"!"
-        #string _notAllowedMessage="Option "%s" not allowed in "%s::_options"!"
-        #?Closure _onOptionChange=NULL
-        #string _optionNotFoundMessage="Option "%s" not found in "%s::_options" and no default value provided."
-        #array _options=[0..*]
-        #string _requiredMissingMessage="Required option "%s" is missing in "%s::_options"!"
-        #array _requiredOptions=[0..*]
-        #_getCallee():string
-        +getOption(string key, mixed default=NULL):mixed
-        +getOptions():array
-        +hasOption(string key):bool
-        +optionEquals(string key, mixed value):bool
-        +setOption(string key, mixed value, bool overWrite=false):static
-        +setOptions(array _options):object
-        +unsetOption(string key):void
-    }
-```
-[//]: # (End Volta\UmlDoc\MermaidDiagram)
-[//]: # (Start Volta\UmlDoc\MdDiagram)
-
-Generated @  20230619 13:50:49
-
-# Volta\Component\Configuration\
-3 Classes, 0 Interfaces, 1 Traits, 0 Enums,
-### [Volta\Component\Configuration\Config](#) *implements* ArrayAccess, JsonSerializable
- Class Config
- Class for storing name value pairs
-#### Properties(10)
-- protected array **[_allowedOptions](#)** = [0..*]
-- protected string **[_alreadySetMessage](#)** = "Option "%s" already set in "%s::_options"!"
-- protected ?string **[_file](#)** = NULL
-- protected string **[_notAllowedMessage](#)** = "Option "%s" not allowed in "%s::_options"!"
-- protected ?Closure **[_onOptionChange](#)** = NULL
-- protected string **[_optionNotFoundMessage](#)** = "Option "%s" not found in "%s::_options" and no default value provided."
-- protected array **[_options](#)** = [0..*]
-- protected string **[_requiredMissingMessage](#)** = "Required option "%s" is missing in "%s::_options"!"
-- protected array **[_requiredOptions](#)** = [0..*]
-- public static array **[context](#)** = [0..*]
-#### Methods(24)
-- protected function **[_getCallee](#)()**: string
-- protected function **[_getJsonErrorToText](#)(int jsonErrorCode)**: string
-- protected function **[_getOptionsFromJson](#)(string json)**: array
-- public static function **[generate](#)(array library)**: array\
-&rdsh; *Generates a configuration file based on the Key attributes found in the classes in the libraries*
-- public static function **[generateJson](#)(array library)**: string
-- public static function **[getConfigDefaults](#)(string class, bool full)**: int
-- public function **[__construct](#)(array|string options=[], ?Closure onOptionChangeCallback=NULL)**: \
-&rdsh; *Config constructor.*\
-&nbsp;&nbsp; *Passed options can be*\
-&nbsp;&nbsp; *1. A PHP file returning an array*\
-&nbsp;&nbsp; *2. A Json file returning valid json*\
-&nbsp;&nbsp; *3. A valid Json string*\
-&nbsp;&nbsp; *4. An array itself*
-- public function **[getAllowedOptions](#)()**: array
-- public function **[getFile](#)()**: ?string
-- public function **[getOption](#)(string key, mixed default=NULL)**: mixed\
-&rdsh; *Gets the value for an option.*\
-&nbsp;&nbsp; \
-&nbsp;&nbsp; *If a no option is found with the key __$key__ and a default is provided*\
-&nbsp;&nbsp; *the default value is returned. An exception is thrown otherwise.*
-- public function **[getOptions](#)()**: array
-- public function **[getRequiredOptions](#)()**: array
-- public function **[hasOption](#)(string key)**: bool\
-&rdsh; *Checks if an option exists.*
-- public function **[jsonSerialize](#)()**: mixed
-- public function **[offsetExists](#)(mixed offset)**: bool
-- public function **[offsetGet](#)(mixed offset)**: mixed
-- public function **[offsetSet](#)(mixed offset, mixed value)**: void
-- public function **[offsetUnset](#)(mixed offset)**: void
-- public function **[optionEquals](#)(string key, mixed value)**: bool\
-&rdsh; *Checks whether an _options equal the given value*\
-&nbsp;&nbsp; \
-&nbsp;&nbsp; *Returns _TRUE_ when option with index __$key__ is set and is of the same value*\
-&nbsp;&nbsp; *as __$value__, _FALSE_ otherwise.*
-- public function **[setAllowedOptions](#)(array allowedOptions)**: static
-- public function **[setOption](#)(string key, mixed value, bool overWrite=false)**: static\
-&rdsh; *Sets one option*\
-&nbsp;&nbsp; \
-&nbsp;&nbsp; *Throws an exception when the option already is set and __$overWrite__*\
-&nbsp;&nbsp; *is set to false*\
-&nbsp;&nbsp; \
-&nbsp;&nbsp; *The __Options::$_requiredOptions__ and __Options::$_allowedOptions__*\
-&nbsp;&nbsp; *will be taken into account.*
-- public function **[setOptions](#)(array _options)**: object\
-&rdsh; *Sets or overwrites the entire _options list.*\
-&nbsp;&nbsp; \
-&nbsp;&nbsp; *The __Options::$_requiredOptions__ and __Options::$_allowedOptions__*\
-&nbsp;&nbsp; *will be taken into account.*
-- public function **[setRequiredOptions](#)(array requiredOptions)**: static
-- public function **[unsetOption](#)(string key)**: void
-### [Volta\Component\Configuration\Exception](#) : Exception *implements* Throwable, Stringable
- The base Exception class for the Volta\Component\Configuration namespace
-### [Volta\Component\Configuration\Key](#) *implements* Stringable
-#### Methods(9)
-- public function **[__construct](#)(string key, mixed default=NULL, string description=")**:
-- public function **[__invoke](#)()**: void
-- public function **[__toString](#)()**: string
-- public function **[getDefault](#)()**: mixed
-- public function **[getDefaultAsArray](#)()**: array
-- public function **[getDescription](#)()**: string
-- public function **[getDescriptionAsArray](#)()**: array
-- public function **[getKey](#)()**: string
-- public function **[toArray](#)()**: array
-<<Trait>> Volta\Component\Configuration\OptionsTrait
-#_allowedOptions:array=[0..*]
-#_alreadySetMessage:string="Option "%s" already set in "%s::_options"!"
-#_notAllowedMessage:string="Option "%s" not allowed in "%s::_options"!"
-#_onOptionChange:?Closure=NULL
-#_optionNotFoundMessage:string="Option "%s" not found in "%s::_options" and no default value provided."
-#_options:array=[0..*]
-#_requiredMissingMessage:string="Required option "%s" is missing in "%s::_options"!"
-#_requiredOptions:array=[0..*]
-#_getCallee():string
-+getOption(string key, mixed default=NULL):mixed
-+getOptions():array
-+hasOption(string key):bool
-+optionEquals(string key, mixed value):bool
-+setOption(string key, mixed value, bool overWrite=false):static
-+setOptions(array _options):object
-+unsetOption(string key):void
-
-
-[//]: # (End Volta\UmlDoc\MdDiagram)

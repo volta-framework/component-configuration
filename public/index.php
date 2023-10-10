@@ -16,26 +16,22 @@ use Volta\Component\Configuration\Config;
 require_once __DIR__ . '/../vendor/autoload.php';
 
 try {
-    $configArrayData = [
-        "part1" => [
-            "part2" => [
-                "part3" => "value1"
-            ]
-        ]
-    ];
-    $configObj = new Config($configArrayData);
-    print_r($configObj);
 
 
-    $configJsonData = [
-        "part1" => [
-            "part2" => [
-                "part3" => "value1"
-            ]
-        ]
-    ];
-    $configObj = new Config($configArrayData);
-    print_r($configObj);
+//    $configArrayData = [
+//        "part1" => [
+//            "part2" => [
+//                "part3" => "value1"
+//            ]
+//        ]
+//    ];
+//    $configObj = new Config($configArrayData);
+//    echo $configObj;
+
+
+
+    $conf = new Config(__DIR__ . '/../config/example-config.php', ['databases.users']);
+
 
 
 } catch (\Volta\Component\Configuration\Exception $e) {

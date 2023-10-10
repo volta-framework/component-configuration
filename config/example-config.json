@@ -1,0 +1,7 @@
+{
+  "databases": {
+    "default": {
+      "dsn": "sqlite:/path/to/sqlite/db/file.sqlite"
+    }
+  }
+}

@@ -57,11 +57,15 @@ class Config implements ArrayAccess, JsonSerializable
      * 4. An array itself
      *
      * @param array<string, mixed>|string $options
+     * @param array $requiredOptions
+     * @param array $allowedOptions
      * @param Closure|null $onOptionChangeCallback
-     * @throws ConfigException
+     * @throws Exception
      */
-    public function __construct(array|string $options=[], null|Closure $onOptionChangeCallback = null)
+    public function __construct(array|string $options=[], array $requiredOptions = [], array $allowedOptions = [], null|Closure $onOptionChangeCallback = null)
     {
+        $this->setRequiredOptions($requiredOptions);
+        $this->setAllowedOptions($allowedOptions);
         $this->setOptions($options);
         $this->_onOptionChange = $onOptionChangeCallback;
     }
@@ -600,4 +604,9 @@ class Config implements ArrayAccess, JsonSerializable
 
     } // optionEquals(...)
     #endregion
+
+    public function __toString(): string
+    {
+        return print_r($this->_options, true);
+    }
 }
