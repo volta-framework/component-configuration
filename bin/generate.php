@@ -11,8 +11,5 @@ declare(strict_types=1);
 
 
 /*
- * Expects a namespace to
+ * TODO ...
  */
-
-$x = "hallo";
-echo $x[2];
