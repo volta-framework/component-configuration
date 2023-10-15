@@ -359,22 +359,27 @@ class Config implements ArrayAccess, JsonSerializable
      * @return object The current instance of the class implementing this trait
      * @throws ConfigException
      */
-    public function setOptions(array|string $options): object
+    public function setOptions(array|string|Config $options): object
     {
-        if (is_string($options)) { // can be a file or json string
-            if (file_exists($options)) { // if not, assume a json string
-                $this->_file = $options;
-                if( !is_readable($options) || is_dir($options) ) {
-                    throw new ConfigException(sprintf('Could not open "%s" as file.', $options));
+
+        if (is_object($options)) {
+            $options= $options->getOptions();
+        } else {
+            if (is_string($options)) { // can be a file(*.php|*.json) or json string
+                if (file_exists($options)) { // if not, assume a json string
+                    $this->_file = $options;
+                    if (!is_readable($options) || is_dir($options)) {
+                        throw new ConfigException(sprintf('Could not open "%s" as file.', $options));
+                    }
+                    $ext = pathinfo($options, PATHINFO_EXTENSION);
+                    $options = match ($ext) {
+                        'php' => (array)include $options,
+                        'json' => $this->_getOptionsFromJson((string)file_get_contents($options)),
+                        default => throw new ConfigException(sprintf('Filetype "*.%s" not supported', $ext)),
+                    };
+                } else {
+                    $options = $this->_getOptionsFromJson($options);
                 }
-                $ext = pathinfo($options, PATHINFO_EXTENSION);
-                $options = match ($ext) {
-                    'php' => (array)include $options,
-                    'json' => $this->_getOptionsFromJson((string) file_get_contents($options)),
-                    default => throw new ConfigException(sprintf('Filetype "*.%s" not supported', $ext)),
-                };
-            } else {
-                $options = $this->_getOptionsFromJson($options);
             }
         }
 
